@@ -2,6 +2,8 @@
 
 NGOs submit **monthly impact** data (one form or **CSV bulk**); reviewers see **dashboard aggregates** and a **paginated** report table. Built for the **SDE II Take Home**: async CSV processing, job polling, partial failures, **idempotent** `(ngo_id, month)` upserts.
 
+**Write-up (approach, AI usage, production improvements):** [WRITEUP.md](WRITEUP.md)
+
 ---
 
 ## Tech stack
@@ -104,31 +106,10 @@ Screenshots live in **`docs/screenshots/`** (versioned in the repo).
 
 | | |
 | --- | --- |
+| **Production deploy** | **Not deployed.** Run locally or with Docker Compose (see [Setup](#setup)). |
 | **Demo recording** | [Demo-Report-Management.mov (Google Drive)](https://drive.google.com/file/d/1IH2gAJCo7Lxv3FuiruZQVrDqtdqvGKGM/view?usp=sharing) — walkthrough of submissions, bulk CSV, and dashboard. |
 
 _Local dev:_ **http://localhost:3000** after setup.
-
----
-
-## Write-up (deliverable)
-
-### Approach & architectural decisions
-
-- **Thin HTTP layer:** Express controllers call services; Prisma stays in repositories. Validation is shared between REST and the CSV worker.
-- **Async CSV:** Upload only writes the file, creates `import_jobs`, and **enqueues BullMQ**. A **separate worker** parses rows, validates, **upserts** `reports`, and updates job progress/errors so the client can poll without blocking the API.
-- **Idempotency:** Unique `(ngo_id, month)` + Prisma `upsert` so re-submits and CSV duplicates **update** one row per NGO-month; dashboard aggregates stay consistent.
-- **Frontend:** Next.js App Router; submissions on **`/`** (grid + `display: contents` for aligned panels); dashboard filters persisted in **`sessionStorage`** for a smoother reviewer flow.
-
-### Where AI tools were used (if applicable)
-
-Cursor / AI assistants helped with **scaffolding**, **BullMQ + Prisma wiring patterns**, **UI layout tweaks**, **README structure**, and incremental refactors. Requirements and behavior follow the **take-home PDF**; business logic, validation rules, and data model were reviewed by hand.
-
-### What we’d improve for production or with more time
-
-- **AuthN/AuthZ** (org-scoped NGOs), structured **logging + metrics**, **rate limits** on upload.
-- **Object storage** for CSVs, **TTL/retention** on jobs and temp files, **idempotent upload** keys if needed.
-- **OpenAPI** spec, **integration tests** (API + worker), **retries** for transient DB errors on bulk rows.
-- **Observability:** dashboards, alerts, dead-letter handling for failed jobs.
 
 ---
 
