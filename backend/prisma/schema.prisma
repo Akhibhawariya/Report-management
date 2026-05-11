@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Report {
+  id              String   @id @default(uuid()) @db.Uuid
+  ngoId           String   @map("ngo_id")
+  month           String
+  peopleHelped    Int      @map("people_helped")
+  eventsConducted Int      @map("events_conducted")
+  fundsUtilized   Decimal  @map("funds_utilized") @db.Decimal(18, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([ngoId, month], map: "reports_ngo_id_month_key")
+  @@index([month])
+  @@map("reports")
+}
+
+model ImportJob {
+  id            String   @id @default(uuid()) @db.Uuid
+  status        String
+  totalRows     Int      @default(0) @map("total_rows")
+  processedRows Int      @default(0) @map("processed_rows")
+  successCount  Int      @default(0) @map("success_count")
+  failureCount  Int      @default(0) @map("failure_count")
+  errors        Json?
+  filePath      String?  @map("file_path")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("import_jobs")
+}
